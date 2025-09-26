@@ -1,0 +1,319 @@
+{
+  "name": "D_12 FAQ´s v6",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "df3fca9f-f758-40cf-a3b0-4e3164e8bd40",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -720,
+        48
+      ],
+      "webhookId": "5e30f6c3-c640-49c2-83d8-7daaa7e7a569",
+      "credentials": {
+        "telegramApi": {
+          "id": "kRS2ukLMD4dvmUgI",
+          "name": "Valentina_Bot"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chat-id",
+              "name": "chat_id",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "string"
+            },
+            {
+              "id": "user-query",
+              "name": "user_query",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "user-name",
+              "name": "user_name",
+              "value": "={{ $json.message.from.first_name || 'Usuario' }}",
+              "type": "string"
+            },
+            {
+              "id": "clean-query",
+              "name": "clean_query",
+              "value": "={{ $json.message.text.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0e785ad8-21e0-4fa4-b966-ee42d35d062b",
+      "name": "Process User Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=CONSULTA DEL USUARIO: \"{{ $json.user_query }}\"\n\nINSTRUCCIONES:\n\n1. **PARA SALUDOS SIMPLES** (hola, buenas, etc.):\n   - Responde brevemente sin usar herramientas\n   - Ejemplo: \"¡Hola! Puedo ayudarte con cuentas, pagos, envíos, productos, etc. ¿Qué necesitas saber?\"\n\n2. **PARA PREGUNTAS ESPECÍFICAS** (sobre servicios, productos, procesos):\n   - SIEMPRE usa la herramienta \"Search FAQs\" PRIMERO\n   - ANTES de buscar, PIENSA en palabras clave y sinónimos relevantes\n   - Incluye variaciones, plurales, términos relacionados\n\nEJEMPLOS DE ANÁLISIS:\n\n🔍 \"¿cómo pago?\" → Buscar con: pago, pagar, pagos, cobro, dinero, precio, costo, facturación, método, tarjeta\n\n🔍 \"envío gratis\" → Buscar con: envío, envíos, entrega, delivery, shipping, gratis, gratuito, sin costo\n\n🔍 \"crear cuenta\" → Buscar con: crear, cuenta, registro, registrar, alta, signup, nueva, abrir\n\n🔍 \"problemas con tarjeta\" → Buscar con: problemas, tarjeta, error, falla, issue, crédito, débito, visa, mastercard\n\nRECUERDA: Piensa como el usuario - usa sinónimos, variaciones y términos relacionados.",
+        "options": {
+          "systemMessage": "=Eres un asistente FAQ especializado en análisis inteligente de consultas.\n\n**PROCESO DE TRABAJO:**\n\n1. **ANÁLISIS DE CONSULTA:**\n   - Identifica si es saludo (responde directo) o pregunta específica (usa herramienta)\n   - Para preguntas específicas: extrae conceptos clave y genera sinónimos\n\n2. **GENERACIÓN DE PALABRAS CLAVE:**\n   - Piensa en todas las formas que el usuario puede expresar lo mismo\n   - Incluye sinónimos, plurales, variaciones en español\n   - Considera términos técnicos y coloquiales\n\n3. **BÚSQUEDA ESTRATÉGICA:**\n   - Usa la herramienta \"Search FAQs\" con términos expandidos\n   - Busca no solo la palabra exacta, sino conceptos relacionados\n\n4. **RESPUESTA FORMATEADA:**\n   - Usa HTML simple: <b>[Pregunta]</b> seguido de [Respuesta completa]\n   - Si no encuentras respuesta: \"No encontré información sobre ese tema. ¿Puedes reformular tu pregunta?\"\n\n**EJEMPLOS DE MAPEO INTELIGENTE:**\n\n- \"dar de alta\" → alta, registro, crear, nueva, signup, registrar\n- \"cuánto cuesta\" → costo, precio, valor, cuánto, pago, cobro\n- \"no funciona\" → problema, error, falla, issue, no sirve\n- \"contactar\" → contacto, soporte, ayuda, hablar, comunicar\n\n**REGLAS:**\n- SIEMPRE expandir palabras clave antes de buscar\n- Ser directo y conciso\n- Usar formato HTML simple"
+        }
+      },
+      "id": "161fb9aa-1e8b-4a28-b4b6-2a0451f912d1",
+      "name": "FAQ Assistant",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        32
+      ],
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "telegram-chat-id",
+              "name": "chatId",
+              "value": "={{ $('Process User Input').item.json.chat_id }}",
+              "type": "string"
+            },
+            {
+              "id": "formatted-text",
+              "name": "text",
+              "value": "={{ $json.output || $json.text || 'Lo siento, hubo un error procesando tu consulta.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "afdad132-6af8-412d-8de2-2f1076401639",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        96,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "af04f998-fcda-4210-8c7e-f8d76975fe9b",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        32
+      ],
+      "webhookId": "491498e0-1128-4587-bdd6-bb2cd2b615e5",
+      "credentials": {
+        "telegramApi": {
+          "id": "kRS2ukLMD4dvmUgI",
+          "name": "Valentina_Bot"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appR0F7sUuuGI7vaU",
+          "mode": "list",
+          "cachedResultName": "n8n",
+          "cachedResultUrl": "https://airtable.com/appR0F7sUuuGI7vaU"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblimm7KzOIldhcSQ",
+          "mode": "list",
+          "cachedResultName": "FAQs",
+          "cachedResultUrl": "https://airtable.com/appR0F7sUuuGI7vaU/tblimm7KzOIldhcSQ"
+        },
+        "filterByFormula": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Filter_By_Formula', ``, 'string') }}",
+        "options": {
+          "fields": [
+            "Pregunta",
+            "Respuesta",
+            "Keywords",
+            "Categori"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        208
+      ],
+      "id": "15fcd2d4-0837-4b40-9157-f3540701bf02",
+      "name": "Search FAQs",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "59MRgQBCUXoT5FIL",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {
+          "maxTokens": 1000,
+          "temperature": 0.1
+        }
+      },
+      "id": "a24aae85-b3d7-4274-bdae-94dd8a4364a6",
+      "name": "OpenAI GPT-4.1-mini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        -96
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "NexIygreypqMxQVf",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 161191666,
+          "message": {
+            "message_id": 483,
+            "from": {
+              "id": 6295473990,
+              "is_bot": false,
+              "first_name": "multi",
+              "last_name": "agent ai",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 6295473990,
+              "first_name": "multi",
+              "last_name": "agent ai",
+              "type": "private"
+            },
+            "date": 1758299472,
+            "text": "como se da de alta ??"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Process User Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process User Input": {
+      "main": [
+        [
+          {
+            "node": "FAQ Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Assistant": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search FAQs": {
+      "ai_tool": [
+        [
+          {
+            "node": "FAQ Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI GPT-4.1-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "FAQ Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "10623912-541e-45bf-b934-fdd80e8b67d5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ebf73a15750cb163d5669541ff31a65414c9c606fcadfdaa2ac3a55b259a9f91"
+  },
+  "id": "pzJ33MABJiJ1dRjN",
+  "tags": []
+}
